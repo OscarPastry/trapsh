@@ -1,0 +1,9 @@
+trapsh/
+├── src/
+│   ├── main.rs          # CLI entry (clap)
+│   ├── session.rs       # read/write session file
+│   ├── filter.rs        # noise filtering logic
+│   └── generator.rs     # build the output .sh script
+├── shell/
+│   └── trapsh.fish      # fish hook
+└── Cargo.toml
