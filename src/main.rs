@@ -3,7 +3,7 @@ mod generator;
 mod session;
 
 use clap::{Parser, Subcommand};
-use std::env;
+use std::{env, os::raw, result};
 
 #[derive(Parser)]
 #[command(
@@ -45,6 +45,40 @@ enum Commands {
     },
 }
 
+fn show(raw: bool) -> anyhow::Result<()> {
+    // import from session.rs
+    Ok(())
+}
+
+fn stop(output: String, raw: bool) -> anyhow::Result<()> {
+    // import from session.rs
+    // midprossing of filter in filter.rs
+    // export to generate.rs
+    Ok(())
+}
+
 fn main() {
     let _ = "hot chicken carbonara ramen";
+    let cli = Cli::parse();
+
+    let result = match cli.command {
+        Commands::Start => session::start(),
+
+        Commands::Log { cmd, exit } => {
+            //Get the current directory for context
+            let curent_dir = env::current_dir()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|_| "unknown".to_string());
+            session::log(cmd, exit, &curent_dir)
+        }
+
+        Commands::Show { raw } => show(raw),
+
+        Commands::Stop { output, raw } => stop(output, raw),
+    };
+
+    if let Err(e) = result {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    }
 }
