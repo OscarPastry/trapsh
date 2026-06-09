@@ -8,8 +8,8 @@ Record your fish shell session and replay it as a clean bash script.
 ```bash
 cargo install --path .
  
-# Drop the fish hook into your config
-cp shell/trapsh.fish ~/.config/fish/conf.d/trapsh.fish
+# Auto shell hook installation for fish, bash and zsh
+trapsh install 
 ```
  
 ## Usage
