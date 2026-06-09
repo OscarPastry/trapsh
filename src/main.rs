@@ -3,7 +3,7 @@ mod generator;
 mod session;
 
 use clap::{Parser, Subcommand};
-use std::{env, os::raw, result};
+use std::env;
 
 #[derive(Parser)]
 #[command(
@@ -69,7 +69,7 @@ fn main() {
             let curent_dir = env::current_dir()
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_else(|_| "unknown".to_string());
-            session::log(cmd, exit, &curent_dir)
+            session::log(&cmd, exit, &curent_dir)
         }
 
         Commands::Show { raw } => show(raw),
