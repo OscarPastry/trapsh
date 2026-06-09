@@ -85,7 +85,7 @@ pub fn read_entries() -> anyhow::Result<Vec<Entry>> {
     if !path.exists() {
         anyhow::bail!("No session data found. Did you run 'trapsh start' ?");
     }
-    let file() = OpenOptions::new().read(true).open(path)?;
+    let file = OpenOptions::new().read(true).open(path)?;
     let reader = BufReader::new(file);
     let mut entries = Vec::new();
 
