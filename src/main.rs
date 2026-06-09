@@ -5,6 +5,8 @@ mod session;
 use clap::{Parser, Subcommand};
 use std::env;
 
+use crate::generator::generate;
+
 #[derive(Parser)]
 #[command(
     name = "trapsh",
@@ -47,13 +49,47 @@ enum Commands {
 
 fn show(raw: bool) -> anyhow::Result<()> {
     // import from session.rs
+    let entries = session::read_entries()?;
+
+    if raw {
+        for entry in &entries {
+            println!("[exit ={}] [dir={}] {}", entry.exit, entry.dir, entry.cmd);
+        }
+    } else {
+        let filtered = filter::filter(entries);
+        if filtered.is_empty() {
+            println!("No commmand to show after filtering. Try --raw to see everything.");
+            return Ok(());
+        }
+        let script = generator::generate(filtered);
+        println!("{}", script);
+    }
     Ok(())
 }
 
-fn stop(output: String, raw: bool) -> anyhow::Result<()> {
-    // import from session.rs
-    // midprossing of filter in filter.rs
-    // export to generate.rs
+fn stop(output: &str, raw: bool) -> anyhow::Result<()> {
+    let entries = session::read_entries()?;
+    session::stop()?;
+
+    let script = if raw {
+        entries
+            .iter()
+            .map(|e| format!("# exit={} dir={}\n{}", e.exit, e.dir, e.cmd))
+            .collect::<Vec<_>>()
+            .join("\n\n")
+    } else {
+        let filtered = filter::filter(entries);
+        if filtered.is_empty() {
+            println!(
+                "No commmand to include in the script after filtering. Try --raw to see everything."
+            );
+            return Ok(());
+        }
+        generate(filtered)
+    };
+
+    std::fs::write(output, &script)?;
+    println!("Session stopped. Script written to {output}.");
     Ok(())
 }
 
@@ -74,7 +110,7 @@ fn main() {
 
         Commands::Show { raw } => show(raw),
 
-        Commands::Stop { output, raw } => stop(output, raw),
+        Commands::Stop { output, raw } => stop(&output, raw),
     };
 
     if let Err(e) = result {
