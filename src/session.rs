@@ -1,6 +1,6 @@
 use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::path::{self, PathBuf};
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -76,4 +76,29 @@ pub fn log(cmd: &str, exit: i32, dir: &str) -> anyhow::Result<()> {
     writeln!(file, "{}", line)?;
 
     Ok(())
+}
+
+//Read all entries from the current session file.
+pub fn read_entries() -> anyhow::Result<Vec<Entry>> {
+    let path = session_path();
+
+    if !path.exists() {
+        anyhow::bail!("No session data found. Did you run 'trapsh start' ?");
+    }
+    let file() = OpenOptions::new().read(true).open(path)?;
+    let reader = BufReader::new(file);
+    let mut entries = Vec::new();
+
+    for line in reader.lines() {
+        let line = line?;
+        if line.trim().is_empty() {
+            continue;
+        }
+        match serde_json::from_str::<Entry>(&line) {
+            Ok(entry) => entries.push(entry),
+            Err(e) => eprintln!("Failed to parse line as Entry: {}. Error: {}", line, e),
+        }
+    }
+
+    Ok(entries)
 }
