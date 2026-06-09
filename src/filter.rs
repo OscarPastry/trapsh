@@ -36,6 +36,8 @@ const NOISY_COMMAND: &[&str] = &[
     "free",
     "df",
     "du",
+    "trapsh",
+    "cd",
 ];
 
 //Prefixes that indicate a noisy command even with arguments.
