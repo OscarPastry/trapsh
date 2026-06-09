@@ -21,9 +21,12 @@ trapsh install
 trapsh start          # begin recording
  
 # ... do your thing ...
- 
+
+
 trapsh show           # preview the script (filtered)
 trapsh show --raw     # preview everything including failed/noisy commands
+
+trapsh status         # Show the state of the session, if active or not
  
 trapsh stop           # write script to ./trapsh_out.sh and end session
 trapsh stop -o setup.sh   # write to a custom file
