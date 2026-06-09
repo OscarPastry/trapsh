@@ -2,7 +2,10 @@
 # trapsh
  
 Record your fish shell session and replay it as a clean bash script.
- 
+
+## Demo
+<img width="648" height="875" alt="readme1" src="https://github.com/user-attachments/assets/264f6b4c-82f0-4d4c-95cf-94a7ca94d6ca" />
+
 ## Install
  
 ```bash
