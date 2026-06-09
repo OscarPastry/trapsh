@@ -102,3 +102,13 @@ pub fn read_entries() -> anyhow::Result<Vec<Entry>> {
 
     Ok(entries)
 }
+
+pub fn stop() -> anyhow::Result<()> {
+    //Remove lock file to mark session as stopped
+    let lock_file = lock_path();
+    if !lock_file.exists() {
+        anyhow::bail!("No active session found. Did you run 'trapsh start' ?");
+    }
+    fs::remove_file(&lock_file)?;
+    Ok(())
+}
