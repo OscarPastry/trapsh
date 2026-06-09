@@ -49,8 +49,11 @@ enum Commands {
         #[arg(long)]
         raw: bool,
     },
-
+    //Auto installs the shell hooks
     Install,
+
+    // Show whether a session is active and how many commands are recorded
+    Status,
 }
 
 fn show(raw: bool) -> anyhow::Result<()> {
@@ -119,6 +122,8 @@ fn main() {
         Commands::Stop { output, raw } => stop(&output, raw),
 
         Commands::Install => install(),
+
+        Commands::Status => status(),
     };
 
     if let Err(e) = result {
@@ -185,5 +190,29 @@ fn install_bash() -> anyhow::Result<()> {
 
     println!("✓ Bash hook appended to {}", bashrc.display());
     println!("Restart your shell or run: source {}", bashrc.display());
+    Ok(())
+}
+
+fn status() -> anyhow::Result<()> {
+    if !session::is_active() {
+        println!("No active session. Run `trapsh start` to begin recording.");
+        return Ok(());
+    }
+
+    // Count entries if session file exists
+    if let std::result::Result::Ok(entries) = session::read_entries() {
+        let total = entries.len();
+        let kept = filter::filter(entries).len();
+        println!("● Session active");
+        println!(
+            "  {total} commands recorded ({kept} after filtering, {} noise)",
+            total - kept
+        );
+        println!("  Run `trapsh show` to preview or `trapsh stop` to export.");
+    } else {
+        // Session is active but no commands logged yet
+        println!("● Session active — no commands recorded yet.");
+    }
+
     Ok(())
 }
