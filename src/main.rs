@@ -8,6 +8,9 @@ use std::env;
 
 use crate::generator::generate;
 
+const FISH_HOOK: &str = include_str!("../shell/trapsh.fish");
+const BASH_HOOK: &str = include_str!("../shell/trapsh.bash");
+
 #[derive(Parser)]
 #[command(
     name = "trapsh",
@@ -141,7 +144,6 @@ fn install() -> anyhow::Result<()> {
 }
 
 fn install_fish() -> anyhow::Result<()> {
-    let hook_src = "shell/trapsh.fish";
     let dest_dir = dirs::home_dir()
         .ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?
         .join(".config/fish/conf.d");
@@ -156,27 +158,13 @@ fn install_fish() -> anyhow::Result<()> {
         );
         return Ok(());
     }
+    std::fs::write(&dest, FISH_HOOK)?;
 
-    std::fs::copy(hook_src, &dest).map_err(|e| {
-        anyhow::anyhow!(
-            "Failed to copy hook file: {}\n\
-            Make sure you're running this from the trapsh directory.",
-            e
-        )
-    })?;
     println!("✓ Fish hook installed to {}", dest.display());
     println!("Restart your shell or run: source {}", dest.display());
     Ok(())
 }
 fn install_bash() -> anyhow::Result<()> {
-    let hook_src = "shell/trapsh.bash";
-    let snippet = std::fs::read_to_string(hook_src).map_err(|e| {
-        anyhow::anyhow!(
-            "Could not read {hook_src}: {e}\n\
-             Make sure you're running this from the trapsh project directory."
-        )
-    })?;
-
     let bashrc = dirs::home_dir()
         .ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?
         .join(".bashrc");
@@ -193,7 +181,7 @@ fn install_bash() -> anyhow::Result<()> {
     let mut file = std::fs::OpenOptions::new().append(true).open(&bashrc)?;
 
     writeln!(file, "\n# --- trapsh hook ---")?;
-    write!(file, "{}", snippet)?;
+    write!(file, "{}", BASH_HOOK)?;
 
     println!("✓ Bash hook appended to {}", bashrc.display());
     println!("Restart your shell or run: source {}", bashrc.display());
