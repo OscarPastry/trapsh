@@ -52,3 +52,28 @@ pub fn start() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+//log a single command entry to the session file
+// Called by the fish hook after every command.
+//
+pub fn log(cmd: &str, exit: i32, dir: &str) -> anyhow::Result<()> {
+    if !is_active() {
+        //Silently do nothing if no session is running -> hook calls this always
+        return Ok(());
+    }
+
+    let entry = Entry {
+        cmd: cmd.trim().to_string(),
+        exit,
+        dir: dir.to_string(),
+        timestamp: Utc::now().timestamp(),
+    };
+
+    let path = session_path();
+    let mut file = OpenOptions::new().create(true).append(true).open(path)?;
+
+    let line = serde_json::to_string(&entry)?;
+    writeln!(file, "{}", line)?;
+
+    Ok(())
+}
