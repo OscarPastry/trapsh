@@ -2,6 +2,7 @@ mod filter;
 mod generator;
 mod session;
 
+use anyhow::Ok;
 use clap::{Parser, Subcommand};
 use std::env;
 
@@ -45,6 +46,8 @@ enum Commands {
         #[arg(long)]
         raw: bool,
     },
+
+    Install,
 }
 
 fn show(raw: bool) -> anyhow::Result<()> {
@@ -111,10 +114,88 @@ fn main() {
         Commands::Show { raw } => show(raw),
 
         Commands::Stop { output, raw } => stop(&output, raw),
+
+        Commands::Install => install(),
     };
 
     if let Err(e) = result {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     }
+}
+
+fn install() -> anyhow::Result<()> {
+    let shell = env::var("SHELL").unwrap_or_default();
+    if shell.contains("fish") {
+        install_fish()
+    } else if shell.contains("bash") {
+        install_bash()
+    } else if shell.contains("zsh") {
+        install_bash()
+    } else {
+        anyhow::bail!(
+            "Unsupported shell: {}. Only fish , bash, zsh are supported for automatic installation.",
+            shell
+        );
+    }
+}
+
+fn install_fish() -> anyhow::Result<()> {
+    let hook_src = "shell/trapsh.fish";
+    let dest_dir = dirs::home_dir()
+        .ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?
+        .join(".config/fish/conf.d");
+    std::fs::create_dir_all(&dest_dir)?;
+
+    let dest = dest_dir.join("trapsh.fish");
+
+    if dest.exists() {
+        println!(
+            "Fish hook already exists at {}. Skipping installation.",
+            dest.display()
+        );
+        return Ok(());
+    }
+
+    std::fs::copy(hook_src, &dest).map_err(|e| {
+        anyhow::anyhow!(
+            "Failed to copy hook file: {}\n\
+            Make sure you're running this from the trapsh directory.",
+            e
+        )
+    })?;
+    println!("✓ Fish hook installed to {}", dest.display());
+    println!("Restart your shell or run: source {}", dest.display());
+    Ok(())
+}
+fn install_bash() -> anyhow::Result<()> {
+    let hook_src = "shell/trapsh.bash";
+    let snippet = std::fs::read_to_string(hook_src).map_err(|e| {
+        anyhow::anyhow!(
+            "Could not read {hook_src}: {e}\n\
+             Make sure you're running this from the trapsh project directory."
+        )
+    })?;
+
+    let bashrc = dirs::home_dir()
+        .ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?
+        .join(".bashrc");
+
+    // Check if already installed
+    let existing = std::fs::read_to_string(&bashrc).unwrap_or_default();
+    if existing.contains("__trapsh_log") {
+        println!("Hook already present in {}", bashrc.display());
+        return Ok(());
+    }
+
+    // Append the snippet
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new().append(true).open(&bashrc)?;
+
+    writeln!(file, "\n# --- trapsh hook ---")?;
+    write!(file, "{}", snippet)?;
+
+    println!("✓ Bash hook appended to {}", bashrc.display());
+    println!("Restart your shell or run: source {}", bashrc.display());
+    Ok(())
 }
