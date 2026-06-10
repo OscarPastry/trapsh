@@ -10,6 +10,7 @@ use crate::generator::generate;
 
 const FISH_HOOK: &str = include_str!("../shell/trapsh.fish");
 const BASH_HOOK: &str = include_str!("../shell/trapsh.bash");
+const ZSH_HOOK: &str = include_str!("../shell/trapsh.zsh");
 
 #[derive(Parser)]
 #[command(
@@ -139,7 +140,7 @@ fn install() -> anyhow::Result<()> {
     } else if shell.contains("bash") {
         install_bash()
     } else if shell.contains("zsh") {
-        install_bash()
+        install_zsh()
     } else {
         anyhow::bail!(
             "Unsupported shell: {}. Only fish , bash, zsh are supported for automatic installation.",
@@ -190,6 +191,30 @@ fn install_bash() -> anyhow::Result<()> {
 
     println!("✓ Bash hook appended to {}", bashrc.display());
     println!("Restart your shell or run: source {}", bashrc.display());
+    Ok(())
+}
+
+fn install_zsh() -> anyhow::Result<()> {
+    let zshrc = dirs::home_dir()
+        .ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?
+        .join(".zshrc");
+
+    // Check if already installed
+    let existing = std::fs::read_to_string(&zshrc).unwrap_or_default();
+    if existing.contains("__trapsh_preexec") {
+        println!("Hook already present in {}", zshrc.display());
+        return Ok(());
+    }
+
+    // Append the snippet
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new().append(true).create(true).open(&zshrc)?;
+
+    writeln!(file, "\n# --- trapsh hook ---")?;
+    write!(file, "{}", ZSH_HOOK)?;
+
+    println!("✓ Zsh hook appended to {}", zshrc.display());
+    println!("Restart your shell or run: source {}", zshrc.display());
     Ok(())
 }
 
