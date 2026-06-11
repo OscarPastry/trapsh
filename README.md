@@ -2,7 +2,7 @@
 
 > **Record your shell session and replay it as a clean, shareable bash script.**
 
-`trapsh` acts as a transparent background recorder for your terminal. It hooks into your `fish` (or `bash`/`zsh`) session, records the commands you run, filters out the noise (like failed commands, typos, and syntax errors), and outputs a clean, ready-to-use bash script. 
+`trapsh` acts as a transparent background recorder for your terminal. It hooks into your `fish` (or `bash`/`zsh` or `powershell`) session, records the commands you run, filters out the noise (like failed commands, typos, and syntax errors), and outputs a clean, ready-to-use bash script. 
 
 Perfect for creating tutorials, sharing reproduction steps, or just automating your workflow without having to write the script from scratch.
 
