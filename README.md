@@ -15,7 +15,7 @@ Perfect for creating tutorials, sharing reproduction steps, or just automating y
 ## Features
 
 - **Noise Filtering**: Automatically removes failed commands, duplicate entries, and typos from the final output.
-- **Cross-Shell Support**: Hook installation is supported for `fish`, `bash`, and `zsh`.
+- **Cross-Shell Support**: Hook installation is supported for `fish`, `bash`, `zsh`, and `powershell`.
 - **Clean Output**: Generates a standardized bash script (`trapsh_out.sh`) that you can immediately run or share.
 - **Live Preview**: See what your final script will look like before you stop recording.
 
@@ -27,7 +27,7 @@ Ensure you have [Rust and Cargo](https://rustup.rs/) installed, then run:
 # Build and install from source
 cargo install --path .
 
-# Install the shell hooks (supports fish, bash, zsh)
+# Install the shell hooks (supports fish, bash, zsh, powershell)
 trapsh install 
 ```
 

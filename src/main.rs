@@ -11,6 +11,7 @@ use crate::generator::generate;
 const FISH_HOOK: &str = include_str!("../shell/trapsh.fish");
 const BASH_HOOK: &str = include_str!("../shell/trapsh.bash");
 const ZSH_HOOK: &str = include_str!("../shell/trapsh.zsh");
+const POWERSHELL_HOOK: &str = include_str!("../shell/trapsh.ps1");
 
 #[derive(Parser)]
 #[command(
@@ -134,16 +135,26 @@ fn main() {
 }
 
 fn install() -> anyhow::Result<()> {
-    let shell = env::var("SHELL").unwrap_or_default();
-    if shell.contains("fish") {
+    let shell = env::var("SHELL").unwrap_or_else(|_| {
+        if cfg!(windows) {
+            "powershell".to_string()
+        } else {
+            "".to_string()
+        }
+    });
+    
+    let shell_lower = shell.to_lowercase();
+    if shell_lower.contains("fish") {
         install_fish()
-    } else if shell.contains("bash") {
+    } else if shell_lower.contains("bash") {
         install_bash()
-    } else if shell.contains("zsh") {
+    } else if shell_lower.contains("zsh") {
         install_zsh()
+    } else if shell_lower.contains("pwsh") || shell_lower.contains("powershell") {
+        install_powershell()
     } else {
         anyhow::bail!(
-            "Unsupported shell: {}. Only fish , bash, zsh are supported for automatic installation.",
+            "Unsupported shell: {}. Only fish, bash, zsh, and powershell are supported for automatic installation.",
             shell
         );
     }
@@ -215,6 +226,43 @@ fn install_zsh() -> anyhow::Result<()> {
 
     println!("✓ Zsh hook appended to {}", zshrc.display());
     println!("Restart your shell or run: source {}", zshrc.display());
+    Ok(())
+}
+
+fn install_powershell() -> anyhow::Result<()> {
+    // Attempt to get the profile path directly from PowerShell
+    let mut cmd = std::process::Command::new("pwsh");
+    cmd.arg("-NoProfile").arg("-Command").arg("Write-Host -NoNewline $PROFILE");
+    
+    let output = cmd.output().or_else(|_| {
+        let mut cmd2 = std::process::Command::new("powershell");
+        cmd2.arg("-NoProfile").arg("-Command").arg("Write-Host -NoNewline $PROFILE");
+        cmd2.output()
+    }).map_err(|_| anyhow::anyhow!("Could not find pwsh or powershell executable"))?;
+
+    let profile_path = String::from_utf8_lossy(&output.stdout).to_string();
+    let profile = std::path::Path::new(profile_path.trim());
+
+    if let Some(parent) = profile.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    // Check if already installed
+    let existing = std::fs::read_to_string(&profile).unwrap_or_default();
+    if existing.contains("TrapshHookInstalled") {
+        println!("Hook already present in {}", profile.display());
+        return Ok(());
+    }
+
+    // Append the snippet
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new().append(true).create(true).open(&profile)?;
+
+    writeln!(file, "\n# --- trapsh hook ---")?;
+    write!(file, "{}", POWERSHELL_HOOK)?;
+
+    println!("✓ PowerShell hook appended to {}", profile.display());
+    println!("Restart your shell or run: . {}", profile.display());
     Ok(())
 }
 
