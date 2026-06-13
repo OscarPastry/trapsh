@@ -6,7 +6,7 @@
 __trapsh_log() {
     local exit_code=$?
     local last_cmd
-    last_cmd=$(history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
+    last_cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
     trapsh log "$last_cmd" "$exit_code" 2>/dev/null
 }
 
